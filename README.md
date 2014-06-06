@@ -37,17 +37,11 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
-Type: `String`
-Default value: `',  '`
+#### options.copy
+Type: `Boolean`
+Default value: `true`
 
-A string value that is used to do something with whatever.
-
-#### options.punctuation
-Type: `String`
-Default value: `'.'`
-
-A string value that is used to do something else with whatever else.
+Copy the source file to the dest
 
 ### Usage Examples
 
@@ -59,9 +53,9 @@ grunt.initConfig({
   config_seajs: {
     options: {},
     files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
+      'dest/sea-config.js': 'src/sea-config.json'
+    }
+  }
 });
 ```
 
@@ -72,13 +66,12 @@ In this example, custom options are used to do something else with whatever else
 grunt.initConfig({
   config_seajs: {
     options: {
-      separator: ': ',
-      punctuation: ' !!!',
+      copy: false
     },
     files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
+      'dest/sea-config.js': 'src/sea-config.json'
+    }
+  }
 });
 ```
 
