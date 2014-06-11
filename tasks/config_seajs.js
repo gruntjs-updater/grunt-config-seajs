@@ -51,32 +51,99 @@ module.exports = function (grunt) {
 //            }
 
             files.forEach(function (filePath) {
-                var ret = '';
-                if (options.strict) {
-                    if (options.singemark) {
-                        ret += '\'use strict\';\n\n';
-                    }
-                    else {
-                        ret += '"use strict";\n\n'
-                    }
-                }
-                ret += 'seajs.config(';
+                var ret = '',
+                    content,
+                    mapping,
+                    alias,
+                    abspath;
 
-                var content = grunt.file.read(filePath);
-                if (options.singemark) {
-                    ret += content.replace(/'/g, "\\\\'").replace(/"/g, "'");
+                if (options.mapping) {
+
+                    abspath = path.resolve(options.mapping);
+                    if (require.cache[abspath]) {
+                        delete require.cache[abspath];
+                    }
+                    mapping = require(abspath);
+
+                    abspath = path.resolve(filePath);
+                    if (require.cache[abspath]) {
+                        delete require.cache[abspath];
+                    }
+
+                    content = require(abspath);
+                    alias = content.alias;
+
+                    if (mapping && content && alias) {
+                        var key,
+                            val,
+                            valFixed,
+                            mappingKey,
+                            keyFixed;
+
+                        for (key in alias) {
+                            val = alias[key];
+
+                            valFixed = fixPath(val);
+
+                            for (mappingKey in mapping) {
+
+                                keyFixed = fixPath(mappingKey);
+
+                                if (keyFixed === valFixed) {
+                                    alias[key] = mapping[mappingKey];
+                                }
+                            }
+                        }
+                    }
+
+                    grunt.file.write(dest, JSON.stringify(content, null, '\t'));
+
+                    if (options.reload) {
+                        if (!Array.isArray(options.reload)) {
+                            options.reload = [options.reload];
+                        }
+
+                        // 重新加载任务的配置文件
+                        grunt.task.init(options.reload);
+                    }
+
                 } else {
-                    ret += content.replace(/"/g, '\\\\"').replace(/'/g, '"');
-                }
-                ret += ');';
+                    content = grunt.file.read(filePath);
 
-                grunt.file.write(dest, ret);
+                    if (options.strict) {
+                        if (options.singemark) {
+                            ret += '\'use strict\';\n\n';
+                        }
+                        else {
+                            ret += '"use strict";\n\n'
+                        }
+                    }
+                    ret += 'seajs.config(';
+
+                    if (options.singemark) {
+                        ret += content.replace(/'/g, "\\\\'").replace(/"/g, "'");
+                    } else {
+                        ret += content.replace(/"/g, '\\\\"').replace(/'/g, '"');
+                    }
+
+                    ret += ');';
+
+                    grunt.file.write(dest, ret);
+                }
 
                 if (options.copy) {
                     grunt.file.copy(filePath, path.join(path.dirname(dest), path.basename(filePath)));
                 }
+
             });
 
+            function fixPath(p) {
+                var ret = p;
+                if (!path.extname(ret)) {
+                    ret += '.js';
+                }
+                return ret.toLowerCase();
+            }
         });
     });
 
