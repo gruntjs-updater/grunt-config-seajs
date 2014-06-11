@@ -1,7 +1,7 @@
 {
     "name": "grunt-config-seajs",
     "description": "Create seajs config file with json  file",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "homepage": "https://github.com/bubkoo/grunt-config-seajs",
     "author": {
         "name": "bubkoo",
