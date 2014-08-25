@@ -15,8 +15,8 @@ module.exports = function (grunt) {
     grunt.registerMultiTask('config_seajs', 'Create seajs config file with json file', function () {
         // Merge task-specific and/or target-specific options with these defaults.
         var options = this.options({
-            copy: true,
-            strict: true,
+            copy     : true,
+            strict   : true,
             singemark: true
         });
 
@@ -28,6 +28,8 @@ module.exports = function (grunt) {
         this.files.forEach(function (f) {
 
             var dest = f.dest;
+            var build = path.extname(dest) === '.js';
+
 
             var files = f.src.filter(function (filepath) {
                 // Warn on and remove invalid source files (if nonull was set).
@@ -46,10 +48,6 @@ module.exports = function (grunt) {
                 return;
             }
 
-//            if (dest && !grunt.file.isFile(dest)) {
-//                grunt.fail.fatal('Destination for target ' + dest + ' is not a file');
-//            }
-
             files.forEach(function (filePath) {
                 var ret = '',
                     content,
@@ -57,6 +55,20 @@ module.exports = function (grunt) {
                     alias,
                     abspath;
 
+                // 获取源文件的内容
+                abspath = path.resolve(filePath);
+                if (require.cache[abspath]) {
+                    delete require.cache[abspath];
+                }
+
+                content = require(abspath);
+                alias = content.alias;
+
+                // 路径配置
+                if (options.paths) {
+                    content.paths = grunt.util._.merge(content.paths || {}, options.paths);
+                }
+                // 别名配置
                 if (options.mapping) {
 
                     abspath = path.resolve(options.mapping);
@@ -65,13 +77,6 @@ module.exports = function (grunt) {
                     }
                     mapping = require(abspath);
 
-                    abspath = path.resolve(filePath);
-                    if (require.cache[abspath]) {
-                        delete require.cache[abspath];
-                    }
-
-                    content = require(abspath);
-                    alias = content.alias;
 
                     if (mapping && content && alias) {
                         var key,
@@ -96,20 +101,12 @@ module.exports = function (grunt) {
                         }
                     }
 
-                    grunt.file.write(dest, JSON.stringify(content, null, '\t'));
 
-                    if (options.reload) {
-                        if (!Array.isArray(options.reload)) {
-                            options.reload = [options.reload];
-                        }
+                }
 
-                        // 重新加载任务的配置文件
-                        grunt.task.init(options.reload);
-                    }
-
-                } else {
-                    content = grunt.file.read(filePath);
-
+                // 输出文件
+                content = JSON.stringify(content, null, '\t');
+                if (build) {
                     if (options.strict) {
                         if (options.singemark) {
                             ret += '\'use strict\';\n\n';
@@ -129,6 +126,17 @@ module.exports = function (grunt) {
                     ret += ');';
 
                     grunt.file.write(dest, ret);
+                } else {
+                    grunt.file.write(dest, content);
+                }
+
+                if (options.reload) {
+                    if (!Array.isArray(options.reload)) {
+                        options.reload = [options.reload];
+                    }
+
+                    // 重新加载任务的配置文件
+                    grunt.task.init(options.reload);
                 }
 
                 if (options.copy) {
