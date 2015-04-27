@@ -1,6 +1,6 @@
 # grunt-config-seajs
 
-> Create seajs config file with json  file
+> Generate seajs' config file from json or yaml.
 
 ## Getting Started
 This plugin requires Grunt `~0.4.5`
